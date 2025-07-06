@@ -1,0 +1,17 @@
+name: Lighthouse Budget Check
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lhci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npx lhci autorun --config=lighthouserc.js
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
