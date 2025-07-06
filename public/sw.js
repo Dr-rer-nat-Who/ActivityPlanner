@@ -18,3 +18,13 @@ self.addEventListener('fetch', (e) => {
     );
   }
 });
+
+self.addEventListener('push', (e) => {
+  let data = {};
+  try {
+    data = e.data.json();
+  } catch {}
+  const title = data.title || 'Benachrichtigung';
+  const options = { body: data.body || '' };
+  e.waitUntil(self.registration.showNotification(title, options));
+});
