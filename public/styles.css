@@ -27,6 +27,22 @@ body {
   transition: transform 0.2s ease;
   will-change: transform;
 }
+#ready-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 0.5rem;
+}
+#ready-bar img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+.ready-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
 #come-btn:hover {
   transform: scale(1.05);
 }

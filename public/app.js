@@ -1,8 +1,25 @@
-// Toggle ready indicator
+// Ready status handling
 const indicator = document.getElementById('ready-indicator');
-indicator.addEventListener('click', () => {
-  indicator.classList.toggle('ready');
+const readyBar = document.getElementById('ready-bar');
+
+function updateReadyBar(list) {
+  readyBar.innerHTML = '';
+  list.forEach((u) => {
+    const img = document.createElement('img');
+    img.src = `/${u.id}/profile.jpg`;
+    img.className = 'ready-icon';
+    readyBar.appendChild(img);
+  });
+}
+
+indicator.addEventListener('click', async () => {
+  const res = await fetch('/ready', { method: 'POST' });
+  const data = await res.json();
+  indicator.classList.toggle('ready', data.ready);
+  updateReadyBar(data.users);
 });
+
+indicator.classList.toggle('ready', window.READY);
 
 let activities = [];
 let socket;
@@ -32,6 +49,10 @@ async function initCarousel() {
   const comeDesc = document.getElementById('come-desc');
   const comeSubmit = document.getElementById('come-submit');
   const comeBackdrop = comeModal.querySelector('.backdrop');
+
+  const readyRes = await fetch('/ready');
+  const readyUsers = await readyRes.json();
+  updateReadyBar(readyUsers);
 
   function renderParticipants(act) {
     partDiv.innerHTML = '';
@@ -168,6 +189,8 @@ async function initCarousel() {
       if (Notification.permission === 'granted') {
         new Notification(`${data.username} sagt: ${data.activity.title} – Kommt her!`);
       }
+    } else if (data.type === 'ready') {
+      updateReadyBar(data.users);
     }
   });
 }

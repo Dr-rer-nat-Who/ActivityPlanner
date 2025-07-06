@@ -7,6 +7,7 @@ describe('main layout', () => {
     expect(res.statusCode).toBe(200);
     expect(res.text).toContain('Kommt her');
     expect(res.text).toContain('ready-indicator');
+    expect(res.text).toContain('ready-bar');
   });
 
   it('exposes color palette variables', async () => {

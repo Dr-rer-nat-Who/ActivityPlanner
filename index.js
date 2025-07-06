@@ -49,6 +49,18 @@ async function saveUsers(users) {
   await fs.writeFile(DATA_FILE, JSON.stringify(users, null, 2));
 }
 
+async function cleanupReady(users) {
+  const now = Date.now();
+  let changed = false;
+  for (const u of users) {
+    if (u.readyUntil && u.readyUntil < now) {
+      delete u.readyUntil;
+      changed = true;
+    }
+  }
+  if (changed) await saveUsers(users);
+}
+
 async function loadActivities() {
   try {
     const data = await fs.readFile(ACTIVITIES_FILE, 'utf8');
@@ -117,15 +129,20 @@ app.get("/", async (req, res) => {
   let html = await fs.readFile(path.join(__dirname, "public", "index.html"), "utf8");
   const src = req.session.userId ? `/${req.session.userId}/profile.jpg` : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/P+BKywAAAABJRU5ErkJggg==";
   let userName = "";
+  let readyClass = "false";
   if (req.session.userId) {
     const users = await loadUsers();
     const u = users.find((u) => u.id === req.session.userId);
-    if (u) userName = u.username;
+    if (u) {
+      userName = u.username;
+      if (u.readyUntil && u.readyUntil > Date.now()) readyClass = "true";
+    }
   }
   html = html
     .replace("{{PROFILE_SRC}}", src)
     .replace("{{USER_ID}}", req.session.userId || '')
-    .replace("{{USERNAME}}", userName);
+    .replace("{{USERNAME}}", userName)
+    .replace("{{READY}}", readyClass);
   res.type("html").send(html);
 });
 
@@ -230,6 +247,41 @@ app.post('/login', csurf(), async (req, res) => {
   loginAttempts[username] = { count: 0, blockedUntil: 0 };
   req.session.userId = user.id;
   res.send('Login erfolgreich');
+});
+
+app.get('/ready', async (req, res) => {
+  const users = await loadUsers();
+  await cleanupReady(users);
+  const ready = users
+    .filter((u) => u.readyUntil && u.readyUntil > Date.now())
+    .map((u) => ({ id: u.id, username: u.username }));
+  res.json(ready);
+});
+
+app.post('/ready', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const users = await loadUsers();
+  const u = users.find((usr) => usr.id === req.session.userId);
+  if (!u) return res.status(404).send('Not found');
+  let ready;
+  if (u.readyUntil && u.readyUntil > Date.now()) {
+    delete u.readyUntil;
+    ready = false;
+  } else {
+    const expires =
+      process.env.NODE_ENV === 'test' && req.body.expiresIn !== undefined
+        ? Date.now() + Number(req.body.expiresIn)
+        : Date.now() + 2 * 60 * 60 * 1000;
+    u.readyUntil = expires;
+    ready = true;
+  }
+  await saveUsers(users);
+  await cleanupReady(users);
+  const list = users
+    .filter((usr) => usr.readyUntil && usr.readyUntil > Date.now())
+    .map((usr) => ({ id: usr.id, username: usr.username }));
+  broadcast({ type: 'ready', users: list });
+  res.json({ ready, users: list });
 });
 
 app.get('/activities', async (req, res) => {
