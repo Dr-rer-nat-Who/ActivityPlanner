@@ -33,3 +33,4 @@ There are currently no tests or code style rules defined.
   three wrong attempts the account is blocked for five minutes. Added Jest tests
   verifying secure cookies, rate limiting and session refresh.
 
+* Implemented responsive main layout served from `/`. Added global toolbar with "Kommt her" button and ready indicator. Palette variables exposed via `/static/styles.css`. Jest tests ensure toolbar and color palette are served.

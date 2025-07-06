@@ -1,0 +1,59 @@
+:root {
+  --positive: #2ECC71;
+  --negative: #E74C3C;
+}
+body {
+  margin: 0;
+  font-family: sans-serif;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+#come-btn {
+  background: var(--positive);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  will-change: transform;
+}
+#come-btn:hover {
+  transform: scale(1.05);
+}
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.profile img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+#ready-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: gray;
+  transition: background 0.2s ease;
+  will-change: background;
+}
+#ready-indicator.ready {
+  background: var(--positive);
+}
+
+.main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

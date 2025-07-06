@@ -32,6 +32,7 @@ async function saveUsers(users) {
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(ASSET_DIR));
+app.use("/static", express.static(path.join(__dirname, "public")));
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -54,10 +55,14 @@ app.use(
   })
 );
 
-
-app.get('/', (req, res) => {
-  res.send('ActivityPlanner is running!');
+app.get("/", async (req, res) => {
+  let html = await fs.readFile(path.join(__dirname, "public", "index.html"), "utf8");
+  const src = req.session.userId ? `/${req.session.userId}/profile.jpg` : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/P+BKywAAAABJRU5ErkJggg==";
+  html = html.replace("{{PROFILE_SRC}}", src);
+  res.type("html").send(html);
 });
+
+
 
 app.get('/register', csurf(), (req, res) => {
   const form = `
