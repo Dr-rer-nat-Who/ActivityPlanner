@@ -20,6 +20,12 @@ async function initCarousel() {
   const partDiv = card.querySelector('.participants');
   const joinBtn = card.querySelector('.join');
   const declineBtn = card.querySelector('.decline');
+  const modal = document.getElementById('detail-modal');
+  const modalTitle = document.getElementById('detail-title');
+  const modalDesc = document.getElementById('detail-description');
+  const modalParts = document.getElementById('detail-participants');
+  const toggleBtn = document.getElementById('detail-toggle');
+  const backdrop = modal.querySelector('.backdrop');
 
   function renderParticipants(act) {
     partDiv.innerHTML = '';
@@ -28,6 +34,21 @@ async function initCarousel() {
       imgEl.className = 'participant-icon';
       imgEl.src = `/${id}/profile.jpg`;
       partDiv.appendChild(imgEl);
+    });
+  }
+
+  function renderDetailParticipants(list) {
+    modalParts.innerHTML = '';
+    list.forEach((p) => {
+      const d = document.createElement('div');
+      d.className = 'detail-participant';
+      const imgEl = document.createElement('img');
+      imgEl.src = `/${p.id}/profile.jpg`;
+      const span = document.createElement('span');
+      span.textContent = p.username;
+      d.appendChild(imgEl);
+      d.appendChild(span);
+      modalParts.appendChild(d);
     });
   }
 
@@ -63,6 +84,32 @@ async function initCarousel() {
     }
     if (index >= activities.length) index = 0;
     show(index);
+  });
+
+  img.addEventListener('click', async () => {
+    const act = activities[index];
+    const res = await fetch(`/activities/${act.id}/detail`);
+    const data = await res.json();
+    modalTitle.textContent = data.title;
+    modalDesc.innerHTML = data.descriptionHtml;
+    renderDetailParticipants(data.participants);
+    modal.classList.add('active');
+    toggleBtn.onclick = async () => {
+      if ((act.participants || []).includes(window.USER_ID)) {
+        await fetch(`/activities/${act.id}/decline`, { method: 'POST' });
+        act.participants = act.participants.filter((id) => id !== window.USER_ID);
+      } else {
+        await fetch(`/activities/${act.id}/join`, { method: 'POST' });
+        act.participants.push(window.USER_ID);
+      }
+      renderParticipants(act);
+      modal.classList.remove('active');
+    };
+  });
+
+  backdrop.addEventListener('click', () => modal.classList.remove('active'));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') modal.classList.remove('active');
   });
 
   show(index);

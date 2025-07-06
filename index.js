@@ -10,6 +10,7 @@ const sharp = require('sharp');
 const crypto = require('crypto');
 const http = require('http');
 const WebSocket = require('ws');
+const sanitizeHtml = require('sanitize-html');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,6 +60,20 @@ async function loadActivities() {
 
 async function saveActivities(activities) {
   await fs.writeFile(ACTIVITIES_FILE, JSON.stringify(activities, null, 2));
+}
+
+function renderMarkdown(md) {
+  let html = md.replace(/\r/g, '');
+  html = html.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g, (_, text, url) => {
+    return `<a href="${validator.escape(url)}" target="_blank" rel="noopener">${validator.escape(text)}</a>`;
+  });
+  html = html.replace(/\*\*(.+?)\*\*/g, (_, txt) => `<strong>${validator.escape(txt)}</strong>`);
+  html = html.replace(/\n\n+/g, '</p><p>');
+  html = '<p>' + html + '</p>';
+  return sanitizeHtml(html, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['strong']),
+    allowedAttributes: { a: ['href', 'target', 'rel'] }
+  });
 }
 
 app.use(express.urlencoded({ extended: false }));
@@ -215,6 +230,26 @@ app.get('/activities', async (req, res) => {
     );
   }
   res.json(result);
+});
+
+app.get('/activities/:id/detail', async (req, res) => {
+  const activities = await loadActivities();
+  const act = activities.find((a) => a.id === req.params.id);
+  if (!act) return res.status(404).send('Not found');
+  const users = await loadUsers();
+  const participants = (act.participants || []).map((id) => {
+    const u = users.find((user) => user.id === id);
+    return { id, username: u ? u.username : '' };
+  });
+  const html = renderMarkdown(act.description || '');
+  res.json({
+    id: act.id,
+    title: act.title,
+    date: act.date,
+    image: act.image,
+    descriptionHtml: html,
+    participants,
+  });
 });
 
 app.post('/activities/:id/join', async (req, res) => {
