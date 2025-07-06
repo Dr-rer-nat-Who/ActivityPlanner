@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/styles.css">
+  <title>Registrieren</title>
+</head>
+<body>
+  <form action="/register" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="{{CSRF}}">
+    <div><label>Nutzername: <input name="username" required></label></div>
+    <div><label>Passwort: <input type="password" name="password" required></label></div>
+    <div><label>Profilbild: <input type="file" name="avatar" accept="image/jpeg,image/png" required></label></div>
+    <button type="submit">Registrieren</button>
+  </form>
+  <p><a href="/login">Login</a></p>
+</body>
+</html>
