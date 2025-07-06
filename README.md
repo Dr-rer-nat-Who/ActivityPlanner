@@ -69,7 +69,7 @@ Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, 
 G\xC3\xBCnstige Hoster wie **fly.io** oder **Railway** unterst\xC3\xBCtzen Node.js-Container und kosten im Einsteigerplan unter 10 \xE2\x82\xAC pro Monat.
 Kurzer Ablauf:
 - **fly.io:** `fly launch` ausf\xC3\xBChren, danach `fly deploy`.
-- **Railway:** `railway init` und danach `railway up`.
+- **Railway:** `railway login`, dann `railway init` im Projektordner und anschließend `railway up` zum Starten.
 
 
 7 · Schritt-f\xC3\xBCr-Schritt Einrichtung
@@ -92,3 +92,8 @@ Diese Anleitung beschreibt die komplette Einrichtung ab Installation von Visual 
    - `npm test` f\xC3\xBChrt die automatischen Tests aus.
 8. **Docker verwenden (optional)**
    - Alternativ `docker-compose up` nutzen, um die Anwendung in Containern zu starten.
+9. **Auf Railway deployen (optional)**
+   - Railway-CLI installieren: `npm i -g railway`.
+   - `railway login` ausführen.
+   - Im Projektordner `railway init` gefolgt von `railway up`.
+   - Die URL erscheint nach erfolgreichem Upload in der Konsole.
