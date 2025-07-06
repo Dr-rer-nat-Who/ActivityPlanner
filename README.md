@@ -52,3 +52,8 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+
+## UI Demo
+Eine kleine Beispielseite befindet sich im Verzeichnis `public/`.
+Die Farbwahl wurde mit Blick auf ausreichende Kontraste (WCAG AA) getroffen.
+
