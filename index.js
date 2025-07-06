@@ -248,17 +248,10 @@ app.get("/", async (req, res) => {
 
 
 
-app.get('/register', csurf(), (req, res) => {
-  const form = `
-    <form action="/register" method="POST" enctype="multipart/form-data">
-      <input type="hidden" name="_csrf" value="${req.csrfToken()}">
-      <div><label>Nutzername: <input name="username" required></label></div>
-      <div><label>Passwort: <input type="password" name="password" required></label></div>
-      <div><label>Profilbild: <input type="file" name="avatar" accept="image/jpeg,image/png" required></label></div>
-      <button type="submit">Registrieren</button>
-    </form>
-  `;
-  res.send(form);
+app.get('/register', csurf(), async (req, res) => {
+  let html = await fs.readFile(path.join(__dirname, 'public', 'register.html'), 'utf8');
+  html = html.replace('{{CSRF}}', req.csrfToken());
+  res.type('html').send(html);
 });
 
 app.post('/register', upload.single('avatar'), csurf(), async (req, res) => {
@@ -310,23 +303,15 @@ app.post('/register', upload.single('avatar'), csurf(), async (req, res) => {
   } else {
     await imgSharp.jpeg({ quality: 80 }).toFile(path.join(userDir, 'profile.jpg'));
   }
-
-  const img = `<img src="/assets/${id}/profile" style="border-radius:50%;width:128px;height:128px;" />`;
-  res.send(`Registrierung erfolgreich.<br>${img}`);
+  res.redirect(303, '/login');
 });
 
 const loginAttempts = {};
 
-app.get('/login', csurf(), (req, res) => {
-  const form = `
-    <form action="/login" method="POST">
-      <input type="hidden" name="_csrf" value="${req.csrfToken()}">
-      <div><label>Nutzername: <input name="username" required></label></div>
-      <div><label>Passwort: <input type="password" name="password" required></label></div>
-      <button type="submit">Login</button>
-    </form>
-  `;
-  res.send(form);
+app.get('/login', csurf(), async (req, res) => {
+  let html = await fs.readFile(path.join(__dirname, 'public', 'login.html'), 'utf8');
+  html = html.replace('{{CSRF}}', req.csrfToken());
+  res.type('html').send(html);
 });
 
 app.post('/login', csurf(), async (req, res) => {
@@ -354,7 +339,7 @@ app.post('/login', csurf(), async (req, res) => {
 
   loginAttempts[username] = { count: 0, blockedUntil: 0 };
   req.session.userId = user.id;
-  res.send('Login erfolgreich');
+  res.redirect(303, '/');
 });
 
 app.get('/vapid-key', (req, res) => {

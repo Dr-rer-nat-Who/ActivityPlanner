@@ -30,7 +30,7 @@ describe('registration with profile image', () => {
         contentType: 'image/png',
       });
 
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(303);
     const users = JSON.parse(
       await fs.readFile(path.join(__dirname, '..', 'data', 'users.json'))
     );

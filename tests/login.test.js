@@ -34,7 +34,7 @@ describe('login and session management', () => {
       .set('X-Forwarded-Proto', 'https')
       .send(`username=loginTester&password=strongpassword&_csrf=${csrf}`);
 
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(303);
     const cookie = res.headers['set-cookie'][0];
     expect(cookie).toMatch(/HttpOnly/);
     expect(cookie).toMatch(/SameSite=Lax/);
