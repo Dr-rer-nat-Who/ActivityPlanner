@@ -8,7 +8,6 @@
 </head>
 <body>
   <form action="/register" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="_csrf" value="{{CSRF}}">
     <div><label>Nutzername: <input name="username" required></label></div>
     <div><label>Passwort: <input type="password" name="password" required></label></div>
     <div><label>Profilbild: <input type="file" name="avatar" accept="image/jpeg,image/png" required></label></div>

@@ -8,7 +8,6 @@
 </head>
 <body>
   <form action="/login" method="POST">
-    <input type="hidden" name="_csrf" value="{{CSRF}}">
     <div><label>Nutzername: <input name="username" required></label></div>
     <div><label>Passwort: <input type="password" name="password" required></label></div>
     <button type="submit">Login</button>
