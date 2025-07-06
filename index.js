@@ -11,6 +11,7 @@ const crypto = require('crypto');
 const http = require('http');
 const WebSocket = require('ws');
 const sanitizeHtml = require('sanitize-html');
+const webpush = require('web-push');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,8 +33,22 @@ function broadcast(obj) {
 const DATA_FILE = path.join(__dirname, 'data', 'users.json');
 const ASSET_DIR = path.join(__dirname, 'user-assets');
 const ACTIVITIES_FILE = path.join(__dirname, 'data', 'activities.json');
+const SUBS_FILE = path.join(__dirname, 'data', 'subscriptions.json');
+const VAPID_FILE = path.join(__dirname, 'data', 'vapid.json');
 
 fs.mkdir(ASSET_DIR, { recursive: true }).catch(() => {});
+let vapidKeys;
+
+async function ensureVapid() {
+  try {
+    vapidKeys = JSON.parse(await fs.readFile(VAPID_FILE, 'utf8'));
+  } catch {
+    vapidKeys = webpush.generateVAPIDKeys();
+    await fs.writeFile(VAPID_FILE, JSON.stringify(vapidKeys));
+  }
+  webpush.setVapidDetails('mailto:none@example.com', vapidKeys.publicKey, vapidKeys.privateKey);
+}
+ensureVapid();
 
 // Helpers to load and save users from the JSON file
 async function loadUsers() {
@@ -90,6 +105,33 @@ async function cleanupExpired(activities) {
   if (changed) await saveActivities(activities);
 }
 
+async function loadSubscriptions() {
+  try {
+    const data = await fs.readFile(SUBS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch {
+    return {};
+  }
+}
+
+async function saveSubscriptions(subs) {
+  await fs.writeFile(SUBS_FILE, JSON.stringify(subs, null, 2));
+}
+
+async function sendPush(userId, payload) {
+  const subs = await loadSubscriptions();
+  const sub = subs[userId];
+  if (!sub) return;
+  try {
+    await webpush.sendNotification(sub, JSON.stringify(payload));
+  } catch (err) {
+    if (err.statusCode === 410 || err.statusCode === 404) {
+      delete subs[userId];
+      await saveSubscriptions(subs);
+    }
+  }
+}
+
 function renderMarkdown(md) {
   let html = md.replace(/\r/g, '');
   html = html.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g, (_, text, url) => {
@@ -109,6 +151,7 @@ function extractLocation(desc) {
   return match ? validator.escape(match[1].trim()) : '';
 }
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
   express.static(ASSET_DIR, {
@@ -180,7 +223,8 @@ app.get("/", async (req, res) => {
     .replace("{{PROFILE_SRC}}", src)
     .replace("{{USER_ID}}", req.session.userId || '')
     .replace("{{USERNAME}}", userName)
-    .replace("{{READY}}", readyClass);
+    .replace("{{READY}}", readyClass)
+    .replace("{{VAPID}}", vapidKeys.publicKey);
   res.type("html").send(html);
 });
 
@@ -295,6 +339,31 @@ app.post('/login', csurf(), async (req, res) => {
   res.send('Login erfolgreich');
 });
 
+app.get('/vapid-key', (req, res) => {
+  res.json({ key: vapidKeys.publicKey });
+});
+
+app.post('/subscribe', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const subs = await loadSubscriptions();
+  subs[req.session.userId] = req.body;
+  await saveSubscriptions(subs);
+  res.sendStatus(201);
+});
+
+app.post('/ping/:id', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const users = await loadUsers();
+  const target = users.find((u) => u.id === req.params.id);
+  const sender = users.find((u) => u.id === req.session.userId);
+  if (!target || !sender) return res.status(404).send('Not found');
+  await sendPush(target.id, {
+    title: 'Erwähnung',
+    body: `${sender.username} hat dich erwähnt`,
+  });
+  res.sendStatus(200);
+});
+
 app.get('/ready', async (req, res) => {
   const users = await loadUsers();
   await cleanupReady(users);
@@ -378,6 +447,12 @@ app.post('/activities/:id/join', async (req, res) => {
     await saveActivities(activities);
     const users = await loadUsers();
     const user = users.find((u) => u.id === req.session.userId);
+    if (act.creator && act.creator !== req.session.userId) {
+      await sendPush(act.creator, {
+        title: 'Neue Zusage',
+        body: `${user ? user.username : ''} ist dabei: ${act.title}`,
+      });
+    }
     broadcast({
       type: 'join',
       activityId: act.id,
@@ -436,6 +511,15 @@ app.post('/quick-action', async (req, res) => {
   await saveActivities(activities);
   const users = await loadUsers();
   const user = users.find((u) => u.id === req.session.userId);
+  const subs = await loadSubscriptions();
+  for (const uid of Object.keys(subs)) {
+    if (uid !== req.session.userId) {
+      await sendPush(uid, {
+        title: 'Kommt her',
+        body: `${user ? user.username : ''}: ${obj.title}`,
+      });
+    }
+  }
   broadcast({ type: 'quick', activity: obj, username: user ? user.username : '' });
   res.json({ id: obj.id });
 });

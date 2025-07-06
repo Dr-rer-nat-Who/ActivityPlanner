@@ -157,8 +157,33 @@ async function initCarousel() {
 
   show(index);
 
-  if ('Notification' in window) {
-    Notification.requestPermission();
+  if (
+    window.USER_ID &&
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    !localStorage.getItem('pushOptIn')
+  ) {
+    if (confirm('Push-Benachrichtigungen aktivieren?')) {
+      Notification.requestPermission().then((perm) => {
+        if (perm === 'granted') {
+          navigator.serviceWorker.ready.then((reg) =>
+            reg.pushManager
+              .subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: window.VAPID_KEY,
+              })
+              .then((sub) =>
+                fetch('/subscribe', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(sub),
+                })
+              )
+          );
+        }
+      });
+      localStorage.setItem('pushOptIn', 'true');
+    }
   }
 
   socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
