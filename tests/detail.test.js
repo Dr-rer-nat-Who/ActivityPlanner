@@ -13,7 +13,7 @@ describe('activity detail view', () => {
     const acts = [{
       id: 'd1',
       title: 'Detail',
-      date: '2025-06-01T00:00:00Z',
+      date: '2035-06-01T00:00:00Z',
       image: '',
       description: 'Hello **World** [link](http://example.com)',
       participants: ['u1']

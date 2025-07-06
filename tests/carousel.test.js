@@ -8,8 +8,8 @@ const ACT_FILE = path.join(__dirname, '..', 'data', 'activities.json');
 describe('activities carousel', () => {
   beforeAll(async () => {
     const data = [
-      { id: 'b', title: 'B', date: '2025-05-01T00:00:00Z', image: '', participants: [] },
-      { id: 'a', title: 'A', date: '2025-04-01T00:00:00Z', image: '', participants: [] }
+      { id: 'b', title: 'B', date: '2035-05-01T00:00:00Z', image: '', participants: [] },
+      { id: 'a', title: 'A', date: '2035-04-01T00:00:00Z', image: '', participants: [] }
     ];
     await fs.writeFile(ACT_FILE, JSON.stringify(data));
   });
