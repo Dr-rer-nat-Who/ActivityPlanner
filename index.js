@@ -62,6 +62,18 @@ async function saveActivities(activities) {
   await fs.writeFile(ACTIVITIES_FILE, JSON.stringify(activities, null, 2));
 }
 
+async function cleanupExpired(activities) {
+  const now = Date.now();
+  let changed = false;
+  for (const act of activities) {
+    if (act.expiresAt && now > act.expiresAt && !act.past) {
+      act.past = true;
+      changed = true;
+    }
+  }
+  if (changed) await saveActivities(activities);
+}
+
 function renderMarkdown(md) {
   let html = md.replace(/\r/g, '');
   html = html.replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g, (_, text, url) => {
@@ -222,10 +234,15 @@ app.post('/login', csurf(), async (req, res) => {
 
 app.get('/activities', async (req, res) => {
   const activities = await loadActivities();
-  activities.sort((a, b) => new Date(a.date) - new Date(b.date));
-  let result = activities;
+  await cleanupExpired(activities);
+  activities.sort((a, b) => {
+    if (a.quick && !a.past && !b.quick) return -1;
+    if (!a.quick && b.quick && !b.past) return 1;
+    return new Date(a.date) - new Date(b.date);
+  });
+  let result = activities.filter((a) => !a.past);
   if (req.session.userId) {
-    result = activities.filter(
+    result = result.filter(
       (a) => !(a.declined || []).includes(req.session.userId)
     );
   }
@@ -293,8 +310,36 @@ app.post('/activities/:id/decline', async (req, res) => {
     activityId: act.id,
     userId: req.session.userId
   });
-  
+
   res.sendStatus(200);
+});
+
+app.post('/quick-action', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const title = validator.escape(validator.trim(req.body.title || ''));
+  const description = validator.escape(validator.trim(req.body.description || ''));
+  if (!title) return res.status(400).send('Titel erforderlich');
+
+  const activities = await loadActivities();
+  const expires =
+    process.env.NODE_ENV === 'test' && req.body.expiresIn
+      ? Date.now() + Number(req.body.expiresIn)
+      : Date.now() + 6 * 60 * 60 * 1000;
+  const obj = {
+    id: crypto.randomUUID(),
+    title,
+    description,
+    creator: req.session.userId,
+    quick: true,
+    date: new Date().toISOString(),
+    expiresAt: expires
+  };
+  activities.unshift(obj);
+  await saveActivities(activities);
+  const users = await loadUsers();
+  const user = users.find((u) => u.id === req.session.userId);
+  broadcast({ type: 'quick', activity: obj, username: user ? user.username : '' });
+  res.json({ id: obj.id });
 });
 
 app.post('/activities/:id/restore', async (req, res) => {
@@ -320,6 +365,17 @@ app.get('/rejected', async (req, res) => {
     html += `<div class="mini-card"><h3>${act.title}</h3>` +
             `<form method="POST" action="/activities/${act.id}/restore">` +
             '<button type="submit">Wiederherstellen</button></form></div>';
+  }
+  res.send(html);
+});
+
+app.get('/past', async (req, res) => {
+  const activities = await loadActivities();
+  await cleanupExpired(activities);
+  const past = activities.filter((a) => a.past);
+  let html = '<h1>Vergangene Aktionen</h1>';
+  for (const act of past) {
+    html += `<div class="mini-card"><h3>${act.title}</h3><p>${validator.escape(act.description || '')}</p></div>`;
   }
   res.send(html);
 });

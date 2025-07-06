@@ -26,6 +26,12 @@ async function initCarousel() {
   const modalParts = document.getElementById('detail-participants');
   const toggleBtn = document.getElementById('detail-toggle');
   const backdrop = modal.querySelector('.backdrop');
+  const comeBtn = document.getElementById('come-btn');
+  const comeModal = document.getElementById('come-modal');
+  const comeTitle = document.getElementById('come-title');
+  const comeDesc = document.getElementById('come-desc');
+  const comeSubmit = document.getElementById('come-submit');
+  const comeBackdrop = comeModal.querySelector('.backdrop');
 
   function renderParticipants(act) {
     partDiv.innerHTML = '';
@@ -59,6 +65,7 @@ async function initCarousel() {
     dateEl.textContent = d.toLocaleDateString('de-DE');
     img.src = act.image;
     renderParticipants(act);
+    card.classList.toggle('glow', !!act.quick);
   }
 
   function next() {
@@ -112,6 +119,21 @@ async function initCarousel() {
     if (e.key === 'Escape') modal.classList.remove('active');
   });
 
+  comeBtn.addEventListener('click', () => {
+    comeModal.classList.add('active');
+  });
+  comeBackdrop.addEventListener('click', () => comeModal.classList.remove('active'));
+  comeSubmit.addEventListener('click', async () => {
+    await fetch('/quick-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: comeTitle.value, description: comeDesc.value })
+    });
+    comeTitle.value = '';
+    comeDesc.value = '';
+    comeModal.classList.remove('active');
+  });
+
   show(index);
 
   if ('Notification' in window) {
@@ -138,6 +160,13 @@ async function initCarousel() {
           act.participants.splice(idx, 1);
           if (act === activities[index]) renderParticipants(act);
         }
+      }
+    } else if (data.type === 'quick') {
+      activities.unshift(data.activity);
+      index = 0;
+      show(index);
+      if (Notification.permission === 'granted') {
+        new Notification(`${data.username} sagt: ${data.activity.title} – Kommt her!`);
       }
     }
   });
