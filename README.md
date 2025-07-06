@@ -52,3 +52,22 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+
+⸻
+
+6 · Projekt-Bootstrap
+
+### Lokale Ausf\xC3\xBChrung
+1. Node.js (>=18) installieren.
+2. Im Projektverzeichnis `npm install` ausf\xC3\xBChren.
+3. App per `npm run dev` starten und unter http://localhost:3000 aufrufen.
+
+### Docker-Compose
+1. `docker-compose up` baut und startet den Container in einem Schritt.
+
+### Optionale Cloud-Deployments
+G\xC3\xBCnstige Hoster wie **fly.io** oder **Railway** unterst\xC3\xBCtzen Node.js-Container und kosten im Einsteigerplan unter 10 \xE2\x82\xAC pro Monat.
+Kurzer Ablauf:
+- **fly.io:** `fly launch` ausf\xC3\xBChren, danach `fly deploy`.
+- **Railway:** `railway init` und danach `railway up`.
+
