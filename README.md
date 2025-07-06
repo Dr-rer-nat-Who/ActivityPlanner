@@ -52,3 +52,17 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+
+## Beispiel-Server starten
+
+Für einen lokalen Test ist eine Minimal-Implementierung in `app.py` enthalten.
+Installation der Abhängigkeiten und Start des Servers:
+
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+Die Registrierung erreicht man über `http://localhost:5000/register`. Dort kann
+bereits ein Profilbild hochgeladen werden. Die Bilder werden im Ordner
+`user-assets/<userid>/profile.jpg` gespeichert und auf 512×512 Pixel reduziert.
