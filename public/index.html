@@ -57,6 +57,9 @@
     window.USER_ID = '{{USER_ID}}';
     window.USERNAME = '{{USERNAME}}';
     window.READY = {{READY}};
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/static/sw.js');
+    }
   </script>
 </body>
 </html>

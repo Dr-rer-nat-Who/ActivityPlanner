@@ -22,9 +22,9 @@ There are currently no tests or code style rules defined.
   sanitized using the `validator` package. Future agents should keep these
   security measures intact when extending authentication or user management.
 * Added profile picture upload during registration using `multer` and `sharp`.
-  Images are resized to 512x512px, saved under `user-assets/<userid>/profile.jpg`
-  and served statically. Tests with Jest/Supertest verify file handling and
-  rejection of unsupported types.
+  Images are resized to 512x512px and stored under `user-assets/<userid>/profile.jpg`
+  or `profile.webp`. They are served via `/assets/<id>/profile`. Tests with
+  Jest/Supertest verify file handling and rejection of unsupported types.
 * Test image data is embedded as a Base64 string to avoid storing binary files
   in the repository.
 * Implemented `/login` route with session management. Session cookie is
@@ -41,4 +41,5 @@ There are currently no tests or code style rules defined.
 * Added "Kommt her" quick action. Clicking the toolbar button opens a dialog for title and description. Submitted actions are inserted as first carousel card with glowing green border, broadcast via WebSocket and expire after six hours. Expired items move to `/past`. Jest tests verify creation and expiry logic.
 * Implemented ready status bar. `/ready` toggles a user's two-hour ready flag and broadcasts current ready users via WebSocket. Frontend displays their icons next to "Kommt her". Tests cover toggling and expiry.
 * Added past activities view at `/history`. Dropdown link "Vergangene Aktivitäten" in the profile menu opens a table listing completed events chronologically with a ✔/✖ column showing user's participation. Pagination shows 20 items per page via `?page=` parameter. Older activities are automatically marked as past when their date is in the past.
-* Implemented calendar view `/calendar` listing accepted upcoming activities with date, time, title and parsed location. Includes `/calendar.ics` export of these events. Added responsive layout styles and menu link "Kalender". Jest tests verify listing order, location extraction and ICS generation.
+  * Implemented calendar view `/calendar` listing accepted upcoming activities with date, time, title and parsed location. Includes `/calendar.ics` export of these events. Added responsive layout styles and menu link "Kalender". Jest tests verify listing order, location extraction and ICS generation.
+* Optimized uploaded images: JPEGs are compressed to 80% quality and PNGs converted to WebP. Files are served via `/assets/<id>/profile` with long-term caching headers and a cache-first service worker caches static assets. Tests cover image conversion and cache headers.

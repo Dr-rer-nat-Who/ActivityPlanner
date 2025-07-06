@@ -31,10 +31,17 @@ describe('registration with profile image', () => {
       });
 
     expect(res.statusCode).toBe(200);
-    const users = JSON.parse(await fs.readFile(path.join(__dirname, '..', 'data', 'users.json')));
+    const users = JSON.parse(
+      await fs.readFile(path.join(__dirname, '..', 'data', 'users.json'))
+    );
     expect(users[0]).toHaveProperty('id');
-    const imgPath = path.join(ASSET_DIR, users[0].id, 'profile.jpg');
+    const imgPath = path.join(ASSET_DIR, users[0].id, 'profile.webp');
     await fs.access(imgPath);
+
+    const imgRes = await agent
+      .get(`/assets/${users[0].id}/profile`)
+      .set('X-Forwarded-Proto', 'https');
+    expect(imgRes.headers['cache-control']).toMatch(/max-age=31536000/);
   });
 
   it('rejects unsupported file type', async () => {
