@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Vergangene Aktivitäten</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h1>Vergangene Aktivitäten</h1>
+  <table>
+    <thead>
+      <tr><th>Datum</th><th>Titel</th><th>Teilnahme</th></tr>
+    </thead>
+    <tbody>
+      <% events.forEach(event => { %>
+        <tr>
+          <td><%= new Date(event.date).toLocaleDateString('de-DE') %></td>
+          <td><%= event.title %></td>
+          <td><%= event.participating ? '✔' : '✖' %></td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+  <div class="pagination">
+    <% if (page > 1) { %>
+      <a href="?page=<%= page - 1 %>">Vorherige</a>
+    <% } %>
+    <% if (hasNext) { %>
+      <a href="?page=<%= page + 1 %>">Nächste</a>
+    <% } %>
+  </div>
+</body>
+</html>

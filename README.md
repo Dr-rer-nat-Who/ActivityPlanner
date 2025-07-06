@@ -52,3 +52,12 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+
+## Setup
+
+Install dependencies and run the server:
+```bash
+npm install
+node server.js
+```
+Open http://localhost:3000 in your browser.
