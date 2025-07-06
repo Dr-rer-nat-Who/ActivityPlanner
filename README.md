@@ -52,3 +52,10 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+
+6 · Story 16 – Security Hardening
+
+1. HTTP-Sicherheits-Header setzen: Content-Security-Policy (CSP), HTTP Strict Transport Security (HSTS), X-Content-Type-Options und X-Frame-Options.
+2. Eingaben sanitizen mit OWASP ESAPI und durchgehendes ORM-Parameter-Binding gegen SQL-Injection.
+3. Nächtlicher Abhängigkeits-Scan über `npm audit` bzw. OWASP Dependency-Check.
+4. Pen-Test-Checkliste als Markdown-Datei im Repository.
