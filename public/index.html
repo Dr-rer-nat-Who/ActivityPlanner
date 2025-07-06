@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Activity Planner</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+body { font-family: sans-serif; margin:0; padding:0; }
+#header { display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f0f0f0; }
+#actions { padding:20px; display:flex; flex-direction:column; gap:10px; }
+.card { border:1px solid #ccc; padding:10px; border-radius:8px; }
+.card.glow { box-shadow:0 0 10px #2ECC71; border-color:#2ECC71; }
+#past { margin-top:40px; }
+.dialog { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; border:1px solid #ccc; padding:20px; border-radius:8px; }
+.dialog.show { display:block; }
+</style>
+</head>
+<body>
+<div id="header">
+<button id="quickBtn" style="background:#2ECC71;color:#fff;border:none;border-radius:4px;padding:5px 10px;">Kommt her</button>
+<span id="user">Tim</span>
+</div>
+<div id="actions"></div>
+<h3>Vergangene</h3>
+<div id="past"></div>
+
+<div id="dialog" class="dialog">
+<h3>Spontane Aktion</h3>
+<input id="title" placeholder="Titel"><br>
+<textarea id="desc" placeholder="Beschreibung"></textarea><br>
+<button id="send">Senden</button>
+<button id="cancel">Abbrechen</button>
+</div>
+
+<script>
+const socket = io();
+const actionsEl = document.getElementById('actions');
+const pastEl = document.getElementById('past');
+const quickBtn = document.getElementById('quickBtn');
+const dialog = document.getElementById('dialog');
+const titleInput = document.getElementById('title');
+const descInput = document.getElementById('desc');
+const sendBtn = document.getElementById('send');
+const cancelBtn = document.getElementById('cancel');
+const user = document.getElementById('user').textContent;
+
+function addAction(action, prepend=true){
+  const card = document.createElement('div');
+  card.className = 'card glow';
+  card.innerHTML = `<strong>${action.title}</strong><p>${action.description}</p><em>${action.user}</em>`;
+  if(prepend) actionsEl.prepend(card); else actionsEl.appendChild(card);
+  setTimeout(()=>{
+    card.classList.remove('glow');
+    pastEl.appendChild(card);
+  }, 6*60*60*1000); // 6 Stunden
+}
+
+socket.on('init', list => {
+  list.forEach(a => addAction(a, false));
+});
+
+socket.on('action', action => {
+  addAction(action, true);
+  alert(`${action.user} sagt: ${action.title} – Kommt her!`);
+});
+
+quickBtn.onclick = () => { dialog.classList.add('show'); };
+cancelBtn.onclick = () => { dialog.classList.remove('show'); };
+sendBtn.onclick = async () => {
+  const title = titleInput.value.trim();
+  const description = descInput.value.trim();
+  if(!title) return alert('Titel fehlt');
+  await fetch('/action', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({title, description, user})
+  });
+  titleInput.value='';
+  descInput.value='';
+  dialog.classList.remove('show');
+};
+</script>
+</body>
+</html>
