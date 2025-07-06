@@ -1,6 +1,23 @@
 // Ready status handling
 const indicator = document.getElementById('ready-indicator');
 const readyBar = document.getElementById('ready-bar');
+const darkToggle = document.getElementById('dark-toggle');
+
+function applyTheme() {
+  const pref = localStorage.getItem('theme');
+  if (pref === 'dark' || (!pref && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.body.classList.add('dark');
+  } else {
+    document.body.classList.remove('dark');
+  }
+}
+
+darkToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+});
+
+applyTheme();
 
 function updateReadyBar(list) {
   readyBar.innerHTML = '';
@@ -49,6 +66,43 @@ async function initCarousel() {
   const comeDesc = document.getElementById('come-desc');
   const comeSubmit = document.getElementById('come-submit');
   const comeBackdrop = comeModal.querySelector('.backdrop');
+
+  let startX = 0;
+  let currentX = 0;
+  let dragging = false;
+
+  function onDown(e) {
+    dragging = true;
+    startX = e.clientX;
+    currentX = 0;
+    card.classList.add('swiping');
+  }
+
+  function onMove(e) {
+    if (!dragging) return;
+    currentX = e.clientX - startX;
+    card.style.transform = `translateX(${currentX}px)`;
+  }
+
+  function onEnd() {
+    if (!dragging) return;
+    card.classList.remove('swiping');
+    if (Math.abs(currentX) > card.offsetWidth / 2) {
+      card.style.transform = `translateX(${currentX < 0 ? '-100%' : '100%'})`;
+      setTimeout(() => {
+        card.style.transform = 'translateX(0)';
+        next();
+      }, 250);
+    } else {
+      card.style.transform = 'translateX(0)';
+    }
+    dragging = false;
+  }
+
+  card.addEventListener('pointerdown', onDown);
+  card.addEventListener('pointermove', onMove);
+  card.addEventListener('pointerup', onEnd);
+  card.addEventListener('pointercancel', onEnd);
 
   const readyRes = await fetch('/ready');
   const readyUsers = await readyRes.json();
