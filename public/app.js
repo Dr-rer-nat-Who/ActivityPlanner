@@ -275,3 +275,7 @@ async function initCarousel() {
 }
 
 window.addEventListener('DOMContentLoaded', initCarousel);
+
+if (typeof module !== 'undefined') {
+  module.exports = { applyTheme, updateReadyBar };
+}
