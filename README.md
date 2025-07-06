@@ -52,3 +52,17 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+
+⸻
+
+## Quickstart
+
+Dieses Repository enthält eine minimale Beispiel-Implementierung. Die Web-App lässt sich lokal starten, indem man die Datei `public/index.html` in einem Browser öffnet oder einen einfachen HTTP-Server im `public`-Verzeichnis startet:
+
+```bash
+# Beispiel mit Python
+cd public
+python3 -m http.server
+```
+
+Danach ist die Anwendung unter `http://localhost:8000` erreichbar.

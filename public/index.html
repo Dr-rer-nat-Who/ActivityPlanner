@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>ActivityPlanner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="profile-menu">
+            <img src="https://via.placeholder.com/40" alt="Profil" class="profile-pic" id="profilePic">
+            <div class="dropdown" id="profileDropdown">
+                <button id="dropdownButton">▼</button>
+                <ul id="dropdownList" class="hidden">
+                    <li id="rejectedMenu">Abgelehnt</li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="carousel"></section>
+        <section id="rejectedSection" class="hidden">
+            <h2>Abgelehnte Aktivitäten</h2>
+            <div id="rejectedList"></div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
