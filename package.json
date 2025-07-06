@@ -6,7 +6,11 @@
   "scripts": {
     "test": "jest --runInBand",
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "cy:run": "cypress run",
+    "cy:open": "cypress open",
+    "test:e2e": "start-server-and-test start-test http://localhost:3000 cy:run",
+    "start-test": "NODE_ENV=test node index.js"
   },
   "keywords": [],
   "author": "",
@@ -29,8 +33,11 @@
   },
   "devDependencies": {
     "@lhci/cli": "^0.15.1",
+    "cypress": "^14.5.1",
     "jest": "^30.0.4",
     "nodemon": "^3.1.10",
-    "supertest": "^7.1.1"
+    "start-server-and-test": "^2.0.12",
+    "supertest": "^7.1.1",
+    "wcag-contrast": "^3.0.0"
   }
 }
