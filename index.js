@@ -1,7 +1,8 @@
 const express = require('express');
 const session = require('express-session');
-const csurf = require('csurf');
-const argon2 = require('argon2');
+// security modules removed for simplified version
+// const csurf = require('csurf');
+// const argon2 = require('argon2');
 const validator = require('validator');
 const fs = require('fs').promises;
 const path = require('path');
@@ -12,8 +13,8 @@ const http = require('http');
 const WebSocket = require('ws');
 const sanitizeHtml = require('sanitize-html');
 const webpush = require('web-push');
-const helmet = require('helmet');
-const ESAPI = require('node-esapi');
+// const helmet = require('helmet');
+// const ESAPI = require('node-esapi');
 const Database = require('better-sqlite3');
 
 const app = express();
@@ -169,21 +170,7 @@ function extractLocation(desc) {
   return match ? validator.escape(match[1].trim()) : '';
 }
 
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:'],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        connectSrc: ["'self'"]
-      }
-    },
-    frameguard: { action: 'deny' },
-    hsts: { maxAge: 15552000, includeSubDomains: true }
-  })
-);
+// removed Helmet for simplicity
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
@@ -224,16 +211,9 @@ const upload = multer({
 app.set('trust proxy', 1);
 app.use(
   session({
-    secret: 'change_this_secret',
+    secret: 'simple',
     resave: false,
-    saveUninitialized: false,
-    rolling: true,
-    cookie: {
-      maxAge: 10 * 60 * 1000,
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV !== 'test',
-    },
+    saveUninitialized: true,
   })
 );
 
@@ -263,28 +243,18 @@ app.get("/", async (req, res) => {
 
 
 
-app.get('/register', csurf(), async (req, res) => {
+app.get('/register', async (req, res) => {
   let html = await fs.readFile(path.join(__dirname, 'public', 'register.html'), 'utf8');
-  html = html.replace('{{CSRF}}', req.csrfToken());
+  // no CSRF token
   res.type('html').send(html);
 });
 
-app.post('/register', upload.single('avatar'), csurf(), async (req, res) => {
+app.post('/register', upload.single('avatar'), async (req, res) => {
   const username = validator.trim(req.body.username || '');
   const password = req.body.password || '';
 
-  if (username.length < 3 || username.length > 20) {
-    return res
-      .status(400)
-      .send('Nutzername muss zwischen 3 und 20 Zeichen lang sein.');
-  }
-  if (password.length < 10) {
-    return res
-      .status(400)
-      .send('Passwort muss mindestens 10 Zeichen lang sein.');
-  }
 
-  const sanitizedUsername = ESAPI.encoder().encodeForHTML(username);
+  const sanitizedUsername = username; // no sanitization
   const users = await loadUsers();
 
   if (users.find((u) => u.username.toLowerCase() === sanitizedUsername.toLowerCase())) {
@@ -300,8 +270,8 @@ app.post('/register', upload.single('avatar'), csurf(), async (req, res) => {
 
   const id = crypto.randomUUID();
 
-  const hash = await argon2.hash(password, { type: argon2.argon2id });
-  users.push({ id, username: sanitizedUsername, password: hash });
+  // store password as plain text (insecure)
+  users.push({ id, username: sanitizedUsername, password });
   await saveUsers(users);
 
   const userDir = path.join(ASSET_DIR, id);
@@ -321,38 +291,24 @@ app.post('/register', upload.single('avatar'), csurf(), async (req, res) => {
   res.redirect(303, '/login');
 });
 
-const loginAttempts = {};
 
-app.get('/login', csurf(), async (req, res) => {
+app.get('/login', async (req, res) => {
   let html = await fs.readFile(path.join(__dirname, 'public', 'login.html'), 'utf8');
-  html = html.replace('{{CSRF}}', req.csrfToken());
   res.type('html').send(html);
 });
 
-app.post('/login', csurf(), async (req, res) => {
-  const username = ESAPI.encoder().encodeForHTML(validator.trim(req.body.username || '')).toLowerCase();
+app.post('/login', async (req, res) => {
+  const username = (req.body.username || '').toLowerCase();
   const password = req.body.password || '';
 
-  const attempt = loginAttempts[username] || { count: 0, blockedUntil: 0 };
-  const now = Date.now();
-  if (attempt.blockedUntil && now < attempt.blockedUntil) {
-    return res.status(429).send('Zu viele Fehlversuche. Bitte später erneut versuchen.');
-  }
+  // no rate limiting
 
   const users = await loadUsers();
   const user = users.find((u) => u.username.toLowerCase() === username);
 
-  if (!user || !(await argon2.verify(user.password, password))) {
-    attempt.count += 1;
-    if (attempt.count >= 3) {
-      attempt.blockedUntil = now + 5 * 60 * 1000;
-      attempt.count = 0;
-    }
-    loginAttempts[username] = attempt;
+  if (!user || user.password !== password) {
     return res.status(401).send('Ungültige Anmeldedaten.');
   }
-
-  loginAttempts[username] = { count: 0, blockedUntil: 0 };
   req.session.userId = user.id;
   res.redirect(303, '/');
 });
@@ -520,8 +476,8 @@ app.post('/activities/:id/decline', async (req, res) => {
 
 app.post('/quick-action', async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Login erforderlich');
-  const title = ESAPI.encoder().encodeForHTML(validator.trim(req.body.title || ''));
-  const description = ESAPI.encoder().encodeForHTML(validator.trim(req.body.description || ''));
+  const title = req.body.title || '';
+  const description = req.body.description || '';
   if (!title) return res.status(400).send('Titel erforderlich');
 
   const activities = await loadActivities();
