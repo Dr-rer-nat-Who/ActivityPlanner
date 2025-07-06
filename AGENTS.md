@@ -15,3 +15,10 @@ This repository hosts the **ActivityPlanner** project. The README contains the f
 
 There are currently no tests or code style rules defined.
 
+## Recent Updates
+* Added a basic Express server with a `/register` route for username/password
+  registration. Data is stored in `data/users.json` and passwords are hashed with
+  Argon2id. CSRF protection via `csurf` middleware is enabled. Inputs are
+  sanitized using the `validator` package. Future agents should keep these
+  security measures intact when extending authentication or user management.
+
