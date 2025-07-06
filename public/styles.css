@@ -204,3 +204,27 @@ body {
   height: 24px;
   border-radius: 50%;
 }
+
+.calendar-container {
+  overflow-x: auto;
+}
+.calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.calendar-table th,
+.calendar-table td {
+  padding: 0.25rem;
+  border-bottom: 1px solid #ccc;
+}
+@media (min-width: 800px) {
+  .calendar-table tbody {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .calendar-table tr {
+    width: 50%;
+    box-sizing: border-box;
+    display: table;
+  }
+}

@@ -104,6 +104,11 @@ function renderMarkdown(md) {
   });
 }
 
+function extractLocation(desc) {
+  const match = /(?:Ort|Location):\s*(.+)/i.exec(desc || '');
+  return match ? validator.escape(match[1].trim()) : '';
+}
+
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(ASSET_DIR));
 app.use("/static", express.static(path.join(__dirname, "public")));
@@ -457,6 +462,56 @@ app.get('/history', async (req, res) => {
     html += `<a href="/history?page=${page + 1}">Mehr</a>`;
   }
   res.send(html);
+});
+
+app.get('/calendar', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const activities = await loadActivities();
+  await cleanupExpired(activities);
+  const upcoming = activities.filter(
+    (a) => !a.past && (a.participants || []).includes(req.session.userId)
+  );
+  upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+  let html = '<h1>Kalender</h1>';
+  html += '<a href="/calendar.ics">ICS Export</a>';
+  html +=
+    '<div class="calendar-container"><table class="calendar-table"><tr><th>Datum</th><th>Uhrzeit</th><th>Titel</th><th>Ort</th></tr>';
+  for (const act of upcoming) {
+    const d = new Date(act.date);
+    const date = d.toLocaleDateString('de-DE');
+    const time = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const loc = extractLocation(act.description || '');
+    html += `<tr><td>${date}</td><td>${time}</td><td>${validator.escape(act.title)}</td><td>${loc}</td></tr>`;
+  }
+  html += '</table></div>';
+  res.send(html);
+});
+
+app.get('/calendar.ics', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const activities = await loadActivities();
+  await cleanupExpired(activities);
+  const upcoming = activities.filter(
+    (a) => !a.past && (a.participants || []).includes(req.session.userId)
+  );
+  upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+  let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//ActivityPlanner//EN\r\n';
+  for (const act of upcoming) {
+    const start = new Date(act.date);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    const fmt = (d) => d.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+    const loc = extractLocation(act.description || '');
+    ics += 'BEGIN:VEVENT\r\n';
+    ics += `UID:${act.id}\r\n`;
+    ics += `DTSTAMP:${fmt(start)}\r\n`;
+    ics += `DTSTART:${fmt(start)}\r\n`;
+    ics += `DTEND:${fmt(end)}\r\n`;
+    ics += `SUMMARY:${act.title}\r\n`;
+    if (loc) ics += `LOCATION:${loc}\r\n`;
+    ics += 'END:VEVENT\r\n';
+  }
+  ics += 'END:VCALENDAR\r\n';
+  res.type('text/calendar').send(ics);
 });
 
 
