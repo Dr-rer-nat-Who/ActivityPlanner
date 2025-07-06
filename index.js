@@ -208,7 +208,13 @@ app.post('/login', csurf(), async (req, res) => {
 app.get('/activities', async (req, res) => {
   const activities = await loadActivities();
   activities.sort((a, b) => new Date(a.date) - new Date(b.date));
-  res.json(activities);
+  let result = activities;
+  if (req.session.userId) {
+    result = activities.filter(
+      (a) => !(a.declined || []).includes(req.session.userId)
+    );
+  }
+  res.json(result);
 });
 
 app.post('/activities/:id/join', async (req, res) => {
@@ -241,14 +247,46 @@ app.post('/activities/:id/decline', async (req, res) => {
   const idx = act.participants.indexOf(req.session.userId);
   if (idx !== -1) {
     act.participants.splice(idx, 1);
+  }
+  act.declined = act.declined || [];
+  if (!act.declined.includes(req.session.userId)) {
+    act.declined.push(req.session.userId);
+  }
+  await saveActivities(activities);
+  broadcast({
+    type: 'decline',
+    activityId: act.id,
+    userId: req.session.userId
+  });
+  
+  res.sendStatus(200);
+});
+
+app.post('/activities/:id/restore', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const activities = await loadActivities();
+  const act = activities.find((a) => a.id === req.params.id);
+  if (!act) return res.status(404).send('Not found');
+  act.declined = act.declined || [];
+  const idx = act.declined.indexOf(req.session.userId);
+  if (idx !== -1) {
+    act.declined.splice(idx, 1);
     await saveActivities(activities);
-    broadcast({
-      type: 'decline',
-      activityId: act.id,
-      userId: req.session.userId
-    });
   }
   res.sendStatus(200);
+});
+
+app.get('/rejected', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const activities = await loadActivities();
+  const rejected = activities.filter((a) => (a.declined || []).includes(req.session.userId));
+  let html = '<h1>Abgelehnte Aktivitäten</h1>';
+  for (const act of rejected) {
+    html += `<div class="mini-card"><h3>${act.title}</h3>` +
+            `<form method="POST" action="/activities/${act.id}/restore">` +
+            '<button type="submit">Wiederherstellen</button></form></div>';
+  }
+  res.send(html);
 });
 
 
