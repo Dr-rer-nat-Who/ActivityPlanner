@@ -6,7 +6,7 @@ function updateReadyBar(list) {
   readyBar.innerHTML = '';
   list.forEach((u) => {
     const img = document.createElement('img');
-    img.src = `/${u.id}/profile.jpg`;
+    img.src = `/assets/${u.id}/profile`;
     img.className = 'ready-icon';
     readyBar.appendChild(img);
   });
@@ -59,7 +59,7 @@ async function initCarousel() {
     (act.participants || []).forEach((id) => {
       const imgEl = document.createElement('img');
       imgEl.className = 'participant-icon';
-      imgEl.src = `/${id}/profile.jpg`;
+      imgEl.src = `/assets/${id}/profile`;
       partDiv.appendChild(imgEl);
     });
   }
@@ -70,7 +70,7 @@ async function initCarousel() {
       const d = document.createElement('div');
       d.className = 'detail-participant';
       const imgEl = document.createElement('img');
-      imgEl.src = `/${p.id}/profile.jpg`;
+      imgEl.src = `/assets/${p.id}/profile`;
       const span = document.createElement('span');
       span.textContent = p.username;
       d.appendChild(imgEl);

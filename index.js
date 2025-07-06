@@ -110,8 +110,35 @@ function extractLocation(desc) {
 }
 
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(ASSET_DIR));
-app.use("/static", express.static(path.join(__dirname, "public")));
+app.use(
+  express.static(ASSET_DIR, {
+    setHeaders(res) {
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    },
+  })
+);
+app.use(
+  '/static',
+  express.static(path.join(__dirname, 'public'), {
+    setHeaders(res) {
+      res.set('Cache-Control', 'public, max-age=3600');
+    },
+  })
+);
+
+app.get('/assets/:userId/profile', async (req, res) => {
+  const dir = path.join(ASSET_DIR, req.params.userId);
+  const webp = path.join(dir, 'profile.webp');
+  const jpeg = path.join(dir, 'profile.jpg');
+  try {
+    await fs.access(webp);
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.sendFile(webp);
+  } catch {
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.sendFile(jpeg);
+  }
+});
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -136,7 +163,9 @@ app.use(
 
 app.get("/", async (req, res) => {
   let html = await fs.readFile(path.join(__dirname, "public", "index.html"), "utf8");
-  const src = req.session.userId ? `/${req.session.userId}/profile.jpg` : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/P+BKywAAAABJRU5ErkJggg==";
+  const src = req.session.userId
+    ? `/assets/${req.session.userId}/profile`
+    : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/P+BKywAAAABJRU5ErkJggg==";
   let userName = "";
   let readyClass = "false";
   if (req.session.userId) {
@@ -207,12 +236,20 @@ app.post('/register', upload.single('avatar'), csurf(), async (req, res) => {
 
   const userDir = path.join(ASSET_DIR, id);
   await fs.mkdir(userDir, { recursive: true });
-  await sharp(req.file.buffer)
-    .resize(512, 512, { fit: 'cover' })
-    .jpeg({ quality: 80 })
-    .toFile(path.join(userDir, 'profile.jpg'));
+  const imgSharp = sharp(req.file.buffer)
+    .resize(1920, 1080, { fit: 'inside' })
+    .resize(512, 512, { fit: 'cover' });
+  let ext = 'jpg';
+  if (req.file.mimetype === 'image/png') {
+    ext = 'webp';
+    await imgSharp.toFormat('webp', { quality: 80 }).toFile(
+      path.join(userDir, 'profile.webp')
+    );
+  } else {
+    await imgSharp.jpeg({ quality: 80 }).toFile(path.join(userDir, 'profile.jpg'));
+  }
 
-  const img = `<img src="/${id}/profile.jpg" style="border-radius:50%;width:128px;height:128px;" />`;
+  const img = `<img src="/assets/${id}/profile" style="border-radius:50%;width:128px;height:128px;" />`;
   res.send(`Registrierung erfolgreich.<br>${img}`);
 });
 
