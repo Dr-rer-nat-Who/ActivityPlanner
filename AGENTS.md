@@ -27,4 +27,9 @@ There are currently no tests or code style rules defined.
   rejection of unsupported types.
 * Test image data is embedded as a Base64 string to avoid storing binary files
   in the repository.
+* Implemented `/login` route with session management. Session cookie is
+  configured as secure, HttpOnly and SameSite=Lax with a 10-minute inactivity
+  timeout and rolling refresh. Failed logins are tracked in memory and after
+  three wrong attempts the account is blocked for five minutes. Added Jest tests
+  verifying secure cookies, rate limiting and session refresh.
 
