@@ -52,3 +52,20 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+
+## Bild-Optimierung & Caching (Story 14)
+- Beim Hochladen von Bildern werden diese automatisch mit **sharp** auf max. 1920 × 1080 Pixel skaliert.
+- JPEG-Dateien werden auf 80 % Qualität komprimiert, PNG-Dateien in WebP umgewandelt.
+- Ausgelieferte Bilder erhalten den Header `Cache-Control: public, max-age=31536000, immutable`.
+- Ein einfacher Service Worker verwendet eine Cache-First-Strategie.
+
+### Starten der Demo
+1. Abhängigkeiten installieren:
+   ```bash
+   npm install
+   ```
+2. Server starten:
+   ```bash
+   npm start
+   ```
+3. Im Browser `http://localhost:3000` öffnen und ein Bild hochladen.
