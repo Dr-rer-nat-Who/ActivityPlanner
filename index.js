@@ -8,9 +8,26 @@ const path = require('path');
 const multer = require('multer');
 const sharp = require('sharp');
 const crypto = require('crypto');
+const http = require('http');
+const WebSocket = require('ws');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+const clients = new Set();
+
+wss.on('connection', (ws) => {
+  clients.add(ws);
+  ws.on('close', () => clients.delete(ws));
+});
+
+function broadcast(obj) {
+  const msg = JSON.stringify(obj);
+  for (const ws of clients) {
+    if (ws.readyState === WebSocket.OPEN) ws.send(msg);
+  }
+}
 const DATA_FILE = path.join(__dirname, 'data', 'users.json');
 const ASSET_DIR = path.join(__dirname, 'user-assets');
 const ACTIVITIES_FILE = path.join(__dirname, 'data', 'activities.json');
@@ -38,6 +55,10 @@ async function loadActivities() {
   } catch {
     return [];
   }
+}
+
+async function saveActivities(activities) {
+  await fs.writeFile(ACTIVITIES_FILE, JSON.stringify(activities, null, 2));
 }
 
 app.use(express.urlencoded({ extended: false }));
@@ -68,7 +89,16 @@ app.use(
 app.get("/", async (req, res) => {
   let html = await fs.readFile(path.join(__dirname, "public", "index.html"), "utf8");
   const src = req.session.userId ? `/${req.session.userId}/profile.jpg` : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/P+BKywAAAABJRU5ErkJggg==";
-  html = html.replace("{{PROFILE_SRC}}", src);
+  let userName = "";
+  if (req.session.userId) {
+    const users = await loadUsers();
+    const u = users.find((u) => u.id === req.session.userId);
+    if (u) userName = u.username;
+  }
+  html = html
+    .replace("{{PROFILE_SRC}}", src)
+    .replace("{{USER_ID}}", req.session.userId || '')
+    .replace("{{USERNAME}}", userName);
   res.type("html").send(html);
 });
 
@@ -181,11 +211,52 @@ app.get('/activities', async (req, res) => {
   res.json(activities);
 });
 
+app.post('/activities/:id/join', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const activities = await loadActivities();
+  const act = activities.find((a) => a.id === req.params.id);
+  if (!act) return res.status(404).send('Not found');
+  act.participants = act.participants || [];
+  if (!act.participants.includes(req.session.userId)) {
+    act.participants.push(req.session.userId);
+    await saveActivities(activities);
+    const users = await loadUsers();
+    const user = users.find((u) => u.id === req.session.userId);
+    broadcast({
+      type: 'join',
+      activityId: act.id,
+      userId: req.session.userId,
+      username: user ? user.username : ''
+    });
+  }
+  res.sendStatus(200);
+});
+
+app.post('/activities/:id/decline', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const activities = await loadActivities();
+  const act = activities.find((a) => a.id === req.params.id);
+  if (!act) return res.status(404).send('Not found');
+  act.participants = act.participants || [];
+  const idx = act.participants.indexOf(req.session.userId);
+  if (idx !== -1) {
+    act.participants.splice(idx, 1);
+    await saveActivities(activities);
+    broadcast({
+      type: 'decline',
+      activityId: act.id,
+      userId: req.session.userId
+    });
+  }
+  res.sendStatus(200);
+});
+
 
 if (require.main === module) {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Server started on http://localhost:${PORT}`);
   });
 }
 
 module.exports = app;
+module.exports.server = server;

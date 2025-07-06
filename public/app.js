@@ -4,9 +4,12 @@ indicator.addEventListener('click', () => {
   indicator.classList.toggle('ready');
 });
 
+let activities = [];
+let socket;
+
 async function initCarousel() {
   const res = await fetch('/activities');
-  const activities = await res.json();
+  activities = await res.json();
   if (!activities.length) return;
 
   let index = 0;
@@ -18,18 +21,23 @@ async function initCarousel() {
   const joinBtn = card.querySelector('.join');
   const declineBtn = card.querySelector('.decline');
 
+  function renderParticipants(act) {
+    partDiv.innerHTML = '';
+    (act.participants || []).forEach((id) => {
+      const imgEl = document.createElement('img');
+      imgEl.className = 'participant-icon';
+      imgEl.src = `/${id}/profile.jpg`;
+      partDiv.appendChild(imgEl);
+    });
+  }
+
   function show(i) {
     const act = activities[i];
     title.textContent = act.title;
     const d = new Date(act.date);
     dateEl.textContent = d.toLocaleDateString('de-DE');
     img.src = act.image;
-    partDiv.innerHTML = '';
-    for (let p = 0; p < act.participants; p++) {
-      const span = document.createElement('span');
-      span.className = 'participant-icon';
-      partDiv.appendChild(span);
-    }
+    renderParticipants(act);
   }
 
   function next() {
@@ -37,10 +45,55 @@ async function initCarousel() {
     show(index);
   }
 
-  joinBtn.addEventListener('click', next);
-  declineBtn.addEventListener('click', next);
+  joinBtn.addEventListener('click', async () => {
+    const act = activities[index];
+    await fetch(`/activities/${act.id}/join`, { method: 'POST' });
+    if (!act.participants.includes(window.USER_ID)) {
+      act.participants.push(window.USER_ID);
+      renderParticipants(act);
+    }
+  });
+  declineBtn.addEventListener('click', async () => {
+    const act = activities[index];
+    await fetch(`/activities/${act.id}/decline`, { method: 'POST' });
+    activities.splice(index, 1);
+    if (!activities.length) {
+      card.remove();
+      return;
+    }
+    if (index >= activities.length) index = 0;
+    show(index);
+  });
 
   show(index);
+
+  if ('Notification' in window) {
+    Notification.requestPermission();
+  }
+
+  socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
+  socket.addEventListener('message', (ev) => {
+    const data = JSON.parse(ev.data);
+    if (data.type === 'join') {
+      const act = activities.find((a) => a.id === data.activityId);
+      if (act && !act.participants.includes(data.userId)) {
+        act.participants.push(data.userId);
+        if (act === activities[index]) renderParticipants(act);
+        if (data.userId !== window.USER_ID && act.creator === window.USER_ID && Notification.permission === 'granted') {
+          new Notification(`${data.username} ist dabei`);
+        }
+      }
+    } else if (data.type === 'decline') {
+      const act = activities.find((a) => a.id === data.activityId);
+      if (act) {
+        const idx = act.participants.indexOf(data.userId);
+        if (idx !== -1) {
+          act.participants.splice(idx, 1);
+          if (act === activities[index]) renderParticipants(act);
+        }
+      }
+    }
+  });
 }
 
 window.addEventListener('DOMContentLoaded', initCarousel);
