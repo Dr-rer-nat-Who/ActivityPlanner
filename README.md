@@ -71,3 +71,24 @@ Kurzer Ablauf:
 - **fly.io:** `fly launch` ausf\xC3\xBChren, danach `fly deploy`.
 - **Railway:** `railway init` und danach `railway up`.
 
+
+7 · Schritt-f\xC3\xBCr-Schritt Einrichtung
+
+Diese Anleitung beschreibt die komplette Einrichtung ab Installation von Visual Studio Code.
+
+1. **Visual Studio Code installieren**
+   - Download von https://code.visualstudio.com/ und entsprechend dem Betriebssystem installieren.
+2. **Repository herunterladen**
+   - Terminal \xC3\xB6ffnen und `git clone <repo-url>` ausf\xC3\xBChren oder ZIP herunterladen und entpacken.
+3. **Projektordner in VS Code \xC3\xB6ffnen**
+   - In VS Code \xC3\xBCber *File \xE2\x86\x92 Open Folder...* das zuvor geklonte Verzeichnis w\xC3\xA4hlen.
+4. **Node.js installieren**
+   - Version 18 oder neuer von https://nodejs.org/ herunterladen und installieren.
+5. **Abh\xC3\xA4ngigkeiten installieren**
+   - Im integrierten Terminal `npm install` ausf\xC3\xBChren.
+6. **Entwicklungsserver starten**
+   - `npm run dev` starten und die App unter http://localhost:3000 aufrufen.
+7. **Tests ausf\xC3\xBChren (optional)**
+   - `npm test` f\xC3\xBChrt die automatischen Tests aus.
+8. **Docker verwenden (optional)**
+   - Alternativ `docker-compose up` nutzen, um die Anwendung in Containern zu starten.
