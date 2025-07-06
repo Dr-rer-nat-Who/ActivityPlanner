@@ -1,0 +1,16 @@
+{
+  "name": "activityplanner",
+  "version": "1.0.0",
+  "description": "Projektdokument – Private Planungs-Web-App für Freundeskreise",
+  "main": "index.js",
+  "scripts": {
+    "lhci": "lhci autorun"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@lhci/cli": "^0.15.1"
+  }
+}
