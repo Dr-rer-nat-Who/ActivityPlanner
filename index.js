@@ -12,6 +12,9 @@ const http = require('http');
 const WebSocket = require('ws');
 const sanitizeHtml = require('sanitize-html');
 const webpush = require('web-push');
+const helmet = require('helmet');
+const ESAPI = require('node-esapi');
+const Database = require('better-sqlite3');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -151,6 +154,21 @@ function extractLocation(desc) {
   return match ? validator.escape(match[1].trim()) : '';
 }
 
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:'],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        connectSrc: ["'self'"]
+      }
+    },
+    frameguard: { action: 'deny' },
+    hsts: { maxAge: 15552000, includeSubDomains: true }
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
@@ -258,7 +276,7 @@ app.post('/register', upload.single('avatar'), csurf(), async (req, res) => {
       .send('Passwort muss mindestens 10 Zeichen lang sein.');
   }
 
-  const sanitizedUsername = validator.escape(username);
+  const sanitizedUsername = ESAPI.encoder().encodeForHTML(username);
   const users = await loadUsers();
 
   if (users.find((u) => u.username.toLowerCase() === sanitizedUsername.toLowerCase())) {
@@ -312,7 +330,7 @@ app.get('/login', csurf(), (req, res) => {
 });
 
 app.post('/login', csurf(), async (req, res) => {
-  const username = validator.escape(validator.trim(req.body.username || '')).toLowerCase();
+  const username = ESAPI.encoder().encodeForHTML(validator.trim(req.body.username || '')).toLowerCase();
   const password = req.body.password || '';
 
   const attempt = loginAttempts[username] || { count: 0, blockedUntil: 0 };
@@ -397,6 +415,19 @@ app.post('/ready', async (req, res) => {
     .map((usr) => ({ id: usr.id, username: usr.username }));
   broadcast({ type: 'ready', users: list });
   res.json({ ready, users: list });
+});
+
+app.get('/usernames', async (req, res) => {
+  const prefix = req.query.prefix || '';
+  const users = await loadUsers();
+  const db = new Database(':memory:');
+  db.prepare('CREATE TABLE users(id TEXT, username TEXT)').run();
+  const ins = db.prepare('INSERT INTO users(id, username) VALUES (?, ?)');
+  for (const u of users) ins.run(u.id, u.username);
+  const stmt = db.prepare('SELECT username FROM users WHERE username LIKE ?');
+  const rows = stmt.all(prefix + '%');
+  db.close();
+  res.json(rows.map((r) => r.username));
 });
 
 app.get('/activities', async (req, res) => {
@@ -489,8 +520,8 @@ app.post('/activities/:id/decline', async (req, res) => {
 
 app.post('/quick-action', async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Login erforderlich');
-  const title = validator.escape(validator.trim(req.body.title || ''));
-  const description = validator.escape(validator.trim(req.body.description || ''));
+  const title = ESAPI.encoder().encodeForHTML(validator.trim(req.body.title || ''));
+  const description = ESAPI.encoder().encodeForHTML(validator.trim(req.body.description || ''));
   if (!title) return res.status(400).send('Titel erforderlich');
 
   const activities = await loadActivities();
