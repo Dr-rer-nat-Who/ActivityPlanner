@@ -21,4 +21,10 @@ There are currently no tests or code style rules defined.
   Argon2id. CSRF protection via `csurf` middleware is enabled. Inputs are
   sanitized using the `validator` package. Future agents should keep these
   security measures intact when extending authentication or user management.
+* Added profile picture upload during registration using `multer` and `sharp`.
+  Images are resized to 512x512px, saved under `user-assets/<userid>/profile.jpg`
+  and served statically. Tests with Jest/Supertest verify file handling and
+  rejection of unsupported types.
+* Test image data is embedded as a Base64 string to avoid storing binary files
+  in the repository.
 
