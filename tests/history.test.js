@@ -7,16 +7,14 @@ const USERS_FILE = path.join(__dirname, '..', 'data', 'users.json');
 const ACT_FILE = path.join(__dirname, '..', 'data', 'activities.json');
 const ASSET_DIR = path.join(__dirname, '..', 'user-assets');
 
-describe('rejected activities restore', () => {
+describe('past activities list', () => {
   const agent = request.agent(app);
   let userId;
   beforeAll(async () => {
     await fs.rm(ASSET_DIR, { recursive: true, force: true });
     await fs.writeFile(USERS_FILE, '[]');
-    const acts = [
-      { id: 'r1', title: 'Rejectable', date: '2035-01-01T00:00:00Z', image: '', creator: 'u1', participants: [] }
-    ];
-    await fs.writeFile(ACT_FILE, JSON.stringify(acts));
+    await fs.writeFile(ACT_FILE, '[]');
+
     const getRes = await agent.get('/register').set('X-Forwarded-Proto', 'https');
     const csrf = /name="_csrf" value="([^"]+)"/.exec(getRes.text)[1];
     const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/P+BKywAAAABJRU5ErkJggg==';
@@ -24,7 +22,7 @@ describe('rejected activities restore', () => {
       .post('/register')
       .set('X-Forwarded-Proto', 'https')
       .field('_csrf', csrf)
-      .field('username', 'rejecter')
+      .field('username', 'historyuser')
       .field('password', 'strongpassword')
       .attach('avatar', Buffer.from(png, 'base64'), { filename: 't.png', contentType: 'image/png' });
     const users = JSON.parse(await fs.readFile(USERS_FILE));
@@ -34,27 +32,36 @@ describe('rejected activities restore', () => {
     await agent
       .post('/login')
       .set('X-Forwarded-Proto', 'https')
-      .send(`username=rejecter&password=strongpassword&_csrf=${lcsrf}`);
+      .send(`username=historyuser&password=strongpassword&_csrf=${lcsrf}`);
+
+    const acts = [];
+    for (let i = 0; i < 25; i++) {
+      acts.push({
+        id: `a${i}`,
+        title: `E${i}`,
+        date: '2020-01-01T00:00:00Z',
+        image: '',
+        past: true,
+        participants: i % 2 ? [userId] : []
+      });
+    }
+    await fs.writeFile(ACT_FILE, JSON.stringify(acts));
   });
 
-  it('hides declined activities and allows restoring them', async () => {
-    await agent.post('/activities/r1/decline').set('X-Forwarded-Proto', 'https');
-    let acts = JSON.parse(await fs.readFile(ACT_FILE));
-    expect(acts[0].declined).toContain(userId);
+  it('lists first page with 20 entries and pagination', async () => {
+    const res = await agent.get('/history').set('X-Forwarded-Proto', 'https');
+    expect(res.statusCode).toBe(200);
+    const rows = res.text.match(/<tr>/g) || [];
+    expect(rows.length).toBe(21); // header + 20
+    expect(res.text).toContain('✔');
+    expect(res.text).toContain('✖');
+    expect(res.text).toContain('?page=1');
+  });
 
-    let res = await agent.get('/activities').set('X-Forwarded-Proto', 'https');
-    expect(res.body.length).toBe(0);
-
-    const rejRes = await agent.get('/rejected').set('X-Forwarded-Proto', 'https');
-    expect(rejRes.text).toContain('Rejectable');
-
-    await agent.post('/activities/r1/restore').set('X-Forwarded-Proto', 'https');
-    acts = JSON.parse(await fs.readFile(ACT_FILE));
-    expect((acts[0].declined || []).includes(userId)).toBe(false);
-    expect(acts[0].participants).not.toContain(userId);
-
-    res = await agent.get('/activities').set('X-Forwarded-Proto', 'https');
-    expect(res.body.length).toBe(1);
+  it('shows remaining entries on second page', async () => {
+    const res = await agent.get('/history?page=1').set('X-Forwarded-Proto', 'https');
+    expect(res.statusCode).toBe(200);
+    const rows = res.text.match(/<tr>/g) || [];
+    expect(rows.length).toBe(6); // header + 5
   });
 });
-

@@ -82,6 +82,10 @@ async function cleanupExpired(activities) {
       act.past = true;
       changed = true;
     }
+    if (!act.expiresAt && new Date(act.date).getTime() < now && !act.past) {
+      act.past = true;
+      changed = true;
+    }
   }
   if (changed) await saveActivities(activities);
 }
@@ -428,6 +432,29 @@ app.get('/past', async (req, res) => {
   let html = '<h1>Vergangene Aktionen</h1>';
   for (const act of past) {
     html += `<div class="mini-card"><h3>${act.title}</h3><p>${validator.escape(act.description || '')}</p></div>`;
+  }
+  res.send(html);
+});
+
+app.get('/history', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Login erforderlich');
+  const page = Number.parseInt(req.query.page, 10) || 0;
+  const activities = await loadActivities();
+  await cleanupExpired(activities);
+  const past = activities.filter((a) => a.past);
+  past.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const start = page * 20;
+  const slice = past.slice(start, start + 20);
+  let html = '<h1>Vergangene Aktivitäten</h1>';
+  html += '<table><tr><th>Datum</th><th>Titel</th><th>Teilnahme</th></tr>';
+  for (const act of slice) {
+    const participated = (act.participants || []).includes(req.session.userId);
+    const mark = participated ? '✔' : '✖';
+    html += `<tr><td>${new Date(act.date).toLocaleDateString('de-DE')}</td><td>${validator.escape(act.title)}</td><td>${mark}</td></tr>`;
+  }
+  html += '</table>';
+  if (start + 20 < past.length) {
+    html += `<a href="/history?page=${page + 1}">Mehr</a>`;
   }
   res.send(html);
 });

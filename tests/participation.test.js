@@ -15,7 +15,7 @@ describe('join and decline activities', () => {
     await fs.rm(ASSET_DIR, { recursive: true, force: true });
     await fs.writeFile(USERS_FILE, '[]');
     const activities = [
-      { id: 'x1', title: 'Test', date: '2025-01-01T00:00:00Z', image: '', creator: 'u1', participants: [] }
+      { id: 'x1', title: 'Test', date: '2035-01-01T00:00:00Z', image: '', creator: 'u1', participants: [] }
     ];
     await fs.writeFile(ACT_FILE, JSON.stringify(activities));
 
