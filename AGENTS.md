@@ -34,3 +34,4 @@ There are currently no tests or code style rules defined.
   verifying secure cookies, rate limiting and session refresh.
 
 * Implemented responsive main layout served from `/`. Added global toolbar with "Kommt her" button and ready indicator. Palette variables exposed via `/static/styles.css`. Jest tests ensure toolbar and color palette are served.
+* Added basic activities carousel: `/activities` API returns upcoming events sorted by date. Frontend fetches these and displays swipe-able cards with join/decline buttons. Sample data stored in `data/activities.json`. Jest test checks sorting.
