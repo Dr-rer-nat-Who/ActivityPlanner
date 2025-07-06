@@ -1,0 +1,75 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+.carousel {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+.activity-card {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  width: 200px;
+  text-align: center;
+  cursor: pointer;
+}
+.activity-card img {
+  width: 100%;
+  height: auto;
+}
+#modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hidden {
+  display: none;
+}
+.modal-content {
+  background: white;
+  padding: 1rem;
+  border-radius: 5px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  position: relative;
+}
+.close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.participants {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.participant {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.participant img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+.status-toggle {
+  margin-top: 1rem;
+  text-align: center;
+}
