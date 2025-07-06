@@ -52,6 +52,29 @@ body {
   background: var(--positive);
 }
 
+.menu {
+  position: relative;
+  display: inline-block;
+}
+.menu summary {
+  list-style: none;
+  cursor: pointer;
+}
+.menu[open] {
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0.25rem;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 2;
+}
+.menu a {
+  display: block;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+
 .main {
   display: flex;
   justify-content: center;
