@@ -4,7 +4,7 @@
   "description": "Projektdokument – Private Planungs-Web-App für Freundeskreise",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --runInBand",
     "dev": "nodemon index.js",
     "start": "node index.js"
   },

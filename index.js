@@ -38,11 +38,19 @@ const upload = multer({
   limits: { fileSize: 1024 * 1024 }, // 1MB
 });
 
+app.set('trust proxy', 1);
 app.use(
   session({
     secret: 'change_this_secret',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: {
+      maxAge: 10 * 60 * 1000,
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV !== 'test',
+    },
   })
 );
 
@@ -108,6 +116,48 @@ app.post('/register', upload.single('avatar'), csurf(), async (req, res) => {
 
   const img = `<img src="/${id}/profile.jpg" style="border-radius:50%;width:128px;height:128px;" />`;
   res.send(`Registrierung erfolgreich.<br>${img}`);
+});
+
+const loginAttempts = {};
+
+app.get('/login', csurf(), (req, res) => {
+  const form = `
+    <form action="/login" method="POST">
+      <input type="hidden" name="_csrf" value="${req.csrfToken()}">
+      <div><label>Nutzername: <input name="username" required></label></div>
+      <div><label>Passwort: <input type="password" name="password" required></label></div>
+      <button type="submit">Login</button>
+    </form>
+  `;
+  res.send(form);
+});
+
+app.post('/login', csurf(), async (req, res) => {
+  const username = validator.escape(validator.trim(req.body.username || '')).toLowerCase();
+  const password = req.body.password || '';
+
+  const attempt = loginAttempts[username] || { count: 0, blockedUntil: 0 };
+  const now = Date.now();
+  if (attempt.blockedUntil && now < attempt.blockedUntil) {
+    return res.status(429).send('Zu viele Fehlversuche. Bitte später erneut versuchen.');
+  }
+
+  const users = await loadUsers();
+  const user = users.find((u) => u.username.toLowerCase() === username);
+
+  if (!user || !(await argon2.verify(user.password, password))) {
+    attempt.count += 1;
+    if (attempt.count >= 3) {
+      attempt.blockedUntil = now + 5 * 60 * 1000;
+      attempt.count = 0;
+    }
+    loginAttempts[username] = attempt;
+    return res.status(401).send('Ungültige Anmeldedaten.');
+  }
+
+  loginAttempts[username] = { count: 0, blockedUntil: 0 };
+  req.session.userId = user.id;
+  res.send('Login erfolgreich');
 });
 
 
