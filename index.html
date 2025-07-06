@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Planner</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="carousel">
+    <div class="activity-card" data-index="0">
+      <h3>Wandern im Park</h3>
+      <small>12. Mai 2024</small>
+      <img src="img/activity1.svg" class="activity-image" alt="Wandern">
+    </div>
+    <div class="activity-card" data-index="1">
+      <h3>Filmabend</h3>
+      <small>20. Mai 2024</small>
+      <img src="img/activity2.svg" class="activity-image" alt="Filmabend">
+    </div>
+  </div>
+
+  <div id="modal" class="hidden">
+    <div class="modal-content">
+      <button id="close-btn" class="close">&times;</button>
+      <h2 id="detail-title"></h2>
+      <div id="detail-date" class="detail-date"></div>
+      <div id="detail-description" class="detail-description"></div>
+      <h3>Teilnehmer</h3>
+      <ul id="detail-participants" class="participants"></ul>
+      <div class="status-toggle">
+        <label>
+          <input type="checkbox" id="toggle-status"> Status ändern
+        </label>
+      </div>
+    </div>
+  </div>
+
+<script src="app.js"></script>
+</body>
+</html>
