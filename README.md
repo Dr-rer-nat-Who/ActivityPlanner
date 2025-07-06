@@ -52,3 +52,17 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+
+## Setup & Start
+
+1. Node.js installieren (>=18).
+2. Abhängigkeiten installieren:
+   ```
+   npm install
+   ```
+3. Server starten:
+   ```
+   npm start
+   ```
+4. Registrierungsformular aufrufen: [http://localhost:3000/register](http://localhost:3000/register)
+

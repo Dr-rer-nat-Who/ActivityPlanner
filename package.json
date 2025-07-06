@@ -1,0 +1,23 @@
+{
+  "name": "activityplanner",
+  "version": "1.0.0",
+  "description": "Projektdokument – Private Planungs-Web-App für Freundeskreise",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "argon2": "^0.43.0",
+    "csurf": "^1.11.0",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.1",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  }
+}
