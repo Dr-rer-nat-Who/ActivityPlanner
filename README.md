@@ -52,3 +52,7 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+## Entwicklungslauf
+
+Node.js und npm erforderlich.
+Installiere Abhängigkeiten mit `npm install` und starte die App mit `node server.js`.
