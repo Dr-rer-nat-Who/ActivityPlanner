@@ -7,12 +7,14 @@
   <title>Login</title>
 </head>
 <body>
-  <form action="/login" method="POST">
-    <input type="hidden" name="_csrf" value="{{CSRF}}">
-    <div><label>Nutzername: <input name="username" required></label></div>
-    <div><label>Passwort: <input type="password" name="password" required></label></div>
-    <button type="submit">Login</button>
-  </form>
-  <p><a href="/register">Registrieren</a></p>
+  <div class="page">
+    <form class="auth-card" action="/login" method="POST">
+      <input type="hidden" name="_csrf" value="{{CSRF}}">
+      <label>Nutzername:<input name="username" required></label>
+      <label>Passwort:<input type="password" name="password" required></label>
+      <button type="submit">Login</button>
+      <a href="/register">Registrieren</a>
+    </form>
+  </div>
 </body>
 </html>
