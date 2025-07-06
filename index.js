@@ -53,6 +53,21 @@ async function ensureVapid() {
 }
 ensureVapid();
 
+function layout(title, content) {
+  return `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/styles.css">
+  <title>${title}</title>
+</head>
+<body>
+  <div class="page">${content}</div>
+</body>
+</html>`;
+}
+
 // Helpers to load and save users from the JSON file
 async function loadUsers() {
   try {
@@ -558,24 +573,24 @@ app.get('/rejected', async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Login erforderlich');
   const activities = await loadActivities();
   const rejected = activities.filter((a) => (a.declined || []).includes(req.session.userId));
-  let html = '<h1>Abgelehnte Aktivitäten</h1>';
+  let body = '<h1>Abgelehnte Aktivitäten</h1>';
   for (const act of rejected) {
-    html += `<div class="mini-card"><h3>${act.title}</h3>` +
+    body += `<div class="mini-card"><h3>${act.title}</h3>` +
             `<form method="POST" action="/activities/${act.id}/restore">` +
             '<button type="submit">Wiederherstellen</button></form></div>';
   }
-  res.send(html);
+  res.type('html').send(layout('Abgelehnte Aktivitäten', body));
 });
 
 app.get('/past', async (req, res) => {
   const activities = await loadActivities();
   await cleanupExpired(activities);
   const past = activities.filter((a) => a.past);
-  let html = '<h1>Vergangene Aktionen</h1>';
+  let body = '<h1>Vergangene Aktionen</h1>';
   for (const act of past) {
-    html += `<div class="mini-card"><h3>${act.title}</h3><p>${validator.escape(act.description || '')}</p></div>`;
+    body += `<div class="mini-card"><h3>${act.title}</h3><p>${validator.escape(act.description || '')}</p></div>`;
   }
-  res.send(html);
+  res.type('html').send(layout('Vergangene Aktionen', body));
 });
 
 app.get('/history', async (req, res) => {
@@ -587,18 +602,18 @@ app.get('/history', async (req, res) => {
   past.sort((a, b) => new Date(b.date) - new Date(a.date));
   const start = page * 20;
   const slice = past.slice(start, start + 20);
-  let html = '<h1>Vergangene Aktivitäten</h1>';
-  html += '<table><tr><th>Datum</th><th>Titel</th><th>Teilnahme</th></tr>';
+  let body = '<h1>Vergangene Aktivitäten</h1>';
+  body += '<table><tr><th>Datum</th><th>Titel</th><th>Teilnahme</th></tr>';
   for (const act of slice) {
     const participated = (act.participants || []).includes(req.session.userId);
     const mark = participated ? '✔' : '✖';
-    html += `<tr><td>${new Date(act.date).toLocaleDateString('de-DE')}</td><td>${validator.escape(act.title)}</td><td>${mark}</td></tr>`;
+    body += `<tr><td>${new Date(act.date).toLocaleDateString('de-DE')}</td><td>${validator.escape(act.title)}</td><td>${mark}</td></tr>`;
   }
-  html += '</table>';
+  body += '</table>';
   if (start + 20 < past.length) {
-    html += `<a href="/history?page=${page + 1}">Mehr</a>`;
+    body += `<a href="/history?page=${page + 1}">Mehr</a>`;
   }
-  res.send(html);
+  res.type('html').send(layout('Vergangene Aktivitäten', body));
 });
 
 app.get('/calendar', async (req, res) => {
@@ -609,19 +624,19 @@ app.get('/calendar', async (req, res) => {
     (a) => !a.past && (a.participants || []).includes(req.session.userId)
   );
   upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
-  let html = '<h1>Kalender</h1>';
-  html += '<a href="/calendar.ics">ICS Export</a>';
-  html +=
+  let body = '<h1>Kalender</h1>';
+  body += '<a href="/calendar.ics">ICS Export</a>';
+  body +=
     '<div class="calendar-container"><table class="calendar-table"><tr><th>Datum</th><th>Uhrzeit</th><th>Titel</th><th>Ort</th></tr>';
   for (const act of upcoming) {
     const d = new Date(act.date);
     const date = d.toLocaleDateString('de-DE');
     const time = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     const loc = extractLocation(act.description || '');
-    html += `<tr><td>${date}</td><td>${time}</td><td>${validator.escape(act.title)}</td><td>${loc}</td></tr>`;
+    body += `<tr><td>${date}</td><td>${time}</td><td>${validator.escape(act.title)}</td><td>${loc}</td></tr>`;
   }
-  html += '</table></div>';
-  res.send(html);
+  body += '</table></div>';
+  res.type('html').send(layout('Kalender', body));
 });
 
 app.get('/calendar.ics', async (req, res) => {
