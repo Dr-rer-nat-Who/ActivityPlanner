@@ -13,6 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'users.json');
 const ASSET_DIR = path.join(__dirname, 'user-assets');
+const ACTIVITIES_FILE = path.join(__dirname, 'data', 'activities.json');
 
 fs.mkdir(ASSET_DIR, { recursive: true }).catch(() => {});
 
@@ -28,6 +29,15 @@ async function loadUsers() {
 
 async function saveUsers(users) {
   await fs.writeFile(DATA_FILE, JSON.stringify(users, null, 2));
+}
+
+async function loadActivities() {
+  try {
+    const data = await fs.readFile(ACTIVITIES_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
 }
 
 app.use(express.urlencoded({ extended: false }));
@@ -163,6 +173,12 @@ app.post('/login', csurf(), async (req, res) => {
   loginAttempts[username] = { count: 0, blockedUntil: 0 };
   req.session.userId = user.id;
   res.send('Login erfolgreich');
+});
+
+app.get('/activities', async (req, res) => {
+  const activities = await loadActivities();
+  activities.sort((a, b) => new Date(a.date) - new Date(b.date));
+  res.json(activities);
 });
 
 
