@@ -52,3 +52,22 @@ Sicherheit	• Hoher Schutz vor Web-Angriffen (CSRF, XSS, SQL-Injection u. a.).
 ⸻
 
 Ergebnis: Eine fokussierte, private Planungsplattform mit maximaler Übersicht, blitzschnellen Reaktionen und minimalem Overhead – perfekt abgestimmt auf kleine Freundeskreise.
+
+## Schnellaktion "Kommt her"
+
+Der grüne Button oben links öffnet einen kleinen Dialog für Titel und Beschreibung. Nach dem Absenden erscheint eine neue Karte mit grünem Leuchtrand ganz vorne. Alle verbundenen Browser erhalten eine Sofortnachricht wie
+
+```
+Tim sagt: Grill an – Kommt her!
+```
+
+Nach sechs Stunden wandert die Karte automatisch in den Bereich *Vergangene*.
+
+## Lokaler Start
+
+```
+npm install
+npm start
+```
+
+Die Anwendung läuft anschließend unter http://localhost:3000
