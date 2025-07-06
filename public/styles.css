@@ -137,3 +137,40 @@ body {
   border-radius: 4px;
   cursor: pointer;
 }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal.active {
+  display: flex;
+}
+.modal .backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+.modal .detail-content {
+  position: relative;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  max-width: 500px;
+  z-index: 1;
+  overflow-y: auto;
+  max-height: 90vh;
+}
+.detail-participant {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.detail-participant img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
